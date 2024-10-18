@@ -1,0 +1,44 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - finni-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mynetwork
+
+  backend:
+    build: ./server
+    volumes:
+      - ./server:/usr/src/app
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://myuser:mypassword@db:5432/mydatabase
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+
+  frontend:
+    build: ./client
+    volumes:
+      - ./client:/usr/src/app
+    ports:
+      - "80:80"
+    networks:
+      - mynetwork
+
+volumes:
+  finni-postgres-data:
+
+networks:
+  mynetwork:
+    driver: bridge
