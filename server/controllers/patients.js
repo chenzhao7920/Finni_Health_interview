@@ -1,6 +1,5 @@
 // Import PrismaClient from @prisma/client
-import { PrismaClient } from '@prisma/client';
-
+import { PrismaClient,Prisma} from '@prisma/client';
 // Create a new instance of PrismaClient
 const prisma = new PrismaClient();
 
@@ -27,9 +26,28 @@ export const PatientController = {
 
   getPatients: async (req, res) => {
     try {
-      const patients = await prisma.patients.findMany();
-      console.log("patients",patients)
-      res.json(patients);
+      const { search } = req.query;
+      const searchTerms = search ? search.split(',') : [];
+      const whereClauses = searchTerms.length ?
+      `where` + searchTerms.map((term) => `
+        (
+          first_name ILIKE '%' || '${term}' || '%' OR
+          last_name ILIKE '%' || '${term}' || '%' OR
+          date_of_birth::text ILIKE '%' || '${term}' || '%' OR
+          street ILIKE '%' || '${term}'|| '%' OR
+          city ILIKE '%' || '${term}' || '%'
+        )`
+      ).join(' AND '): ""
+
+      const result = await prisma.$queryRaw`
+           SELECT * FROM patients
+           LEFT JOIN patient_addresses
+           ON patients.id = patient_addresses.patient_id
+           AND patient_addresses.is_primary_address = true
+           ${Prisma.raw(whereClauses)}
+      `
+
+      res.json(result);
     } catch (error) {
       console.log(error)
       res.status(500).json({ error: 'Failed to retrieve patients' });

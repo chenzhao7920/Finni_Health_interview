@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import router from './routes/index.js';
 const app = express();
 app.use(express.json()); // Middleware to parse JSON request bodies
@@ -9,6 +10,7 @@ app.get('/', (req, res) => {
 });
 
 // Use the routes
+app.use(cors());
 app.use(router);
 
 // Start the server
