@@ -9,22 +9,22 @@ datasource db {
 }
 
 model users {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  uid       String?  @unique
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime
+  uid        String?  @unique
 }
 
 model patients {
   id                Int                 @id @default(autoincrement())
-  firstName         String
-  middleName        String?
-  lastName          String
-  dateOfBirth       DateTime
+  first_name        String
+  middle_name       String?
+  last_name         String
+  date_of_birth     DateTime
   status            Status
-  customFields      Json?
+  custom_fields     Json?
   patient_addresses patient_addresses[]
 }
 
@@ -33,10 +33,10 @@ model patient_addresses {
   street             String
   city               String
   state              String
-  postalCode         String
-  patientId          Int
+  postal_code        String
+  patient_id         Int
   is_primary_address Boolean? @default(false)
-  patient            patients @relation(fields: [patientId], references: [id])
+  patients           patients @relation(fields: [patient_id], references: [id], map: "patient_addresses_patientId_fkey")
 }
 
 enum Status {
