@@ -1,11 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -20,31 +14,29 @@ model users {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  patients  patients[]
+  uid       String?  @unique
 }
 
-
 model patients {
-  id                  Int       @id @default(autoincrement())
-  firstName           String
-  middleName          String?
-  lastName            String
-  dateOfBirth         DateTime
-  status              Status
-  patient_addresses   patient_addresses[]
-  customFields        Json
-  user                users?     @relation(fields: [userId], references: [id]) // Optional relationship with User
-  userId              Int?
+  id                Int                 @id @default(autoincrement())
+  firstName         String
+  middleName        String?
+  lastName          String
+  dateOfBirth       DateTime
+  status            Status
+  customFields      Json?
+  patient_addresses patient_addresses[]
 }
 
 model patient_addresses {
-  id         Int      @id @default(autoincrement())
-  street     String
-  city       String
-  state      String
-  postalCode String
-  patient    patients   @relation(fields: [patientId], references: [id])
-  patientId  Int
+  id                 Int      @id @default(autoincrement())
+  street             String
+  city               String
+  state              String
+  postalCode         String
+  patientId          Int
+  is_primary_address Boolean? @default(false)
+  patient            patients @relation(fields: [patientId], references: [id])
 }
 
 enum Status {
