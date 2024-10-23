@@ -28,7 +28,8 @@ services:
       - mynetwork
 
   frontend:
-    build: ./client
+    build:
+      context: ./client
     volumes:
       - ./client:/usr/src/app
     ports:
