@@ -6,16 +6,16 @@ const prisma = new PrismaClient();
 // Define the PatientController object with methods
 export const PatientController = {
   createPatient: async (req, res) => {
-    const { firstName, middleName, lastName, dateOfBirth, status, customFields } = req.body;
+    const { first_name, middle_name, last_name, date_of_birth, status, custom_fields } = req.body;
     try {
       const newPatient = await prisma.patients.create({
         data: {
-          firstName,
-          middleName,
-          lastName,
-          dateOfBirth,
+          first_name,
+          middle_name,
+          last_name,
+          date_of_birth,
           status,
-          customFields,
+          custom_fields,
         },
       });
       res.status(201).json(newPatient);
@@ -40,8 +40,8 @@ export const PatientController = {
       ).join(' AND '): ""
 
       const result = await prisma.$queryRaw`
-           SELECT * FROM patients
-           LEFT JOIN patient_addresses
+           SELECT * FROM patient_addresses
+           LEFT JOIN patients
            ON patients.id = patient_addresses.patient_id
            AND patient_addresses.is_primary_address = true
            ${Prisma.raw(whereClauses)}
@@ -59,6 +59,9 @@ export const PatientController = {
     try {
       const patient = await prisma.patients.findUnique({ // Use findUnique instead of get
         where: { id: Number(id) },
+        include: {
+          patient_addresses: true
+        }
       });
       res.json(patient);
     } catch (error) {
@@ -68,17 +71,17 @@ export const PatientController = {
 
   updatePatientById: async (req, res) => { // Changed to lowercase 'u' for consistency
     const { id } = req.params;
-    const { firstName, middleName, lastName, dateOfBirth, status, customFields } = req.body;
+    const { first_name, middle_name, last_name, date_of_birth, status, custom_fields } = req.body;
     try {
       const updatedPatient = await prisma.patients.update({
         where: { id: Number(id) },
         data: {
-          firstName,
-          middleName,
-          lastName,
-          dateOfBirth,
+          first_name,
+          middle_name,
+          last_name,
+          date_of_birth,
           status,
-          customFields,
+          custom_fields,
         },
       });
       res.json(updatedPatient);

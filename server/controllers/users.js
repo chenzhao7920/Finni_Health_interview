@@ -1,26 +1,29 @@
 import { PrismaClient } from '@prisma/client';
-//import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 export const UserController = {
   // Create a new user
   createUser: async (req, res) => {
-    const { email, password } = req.body;
-
+    const { email, password, uid } = req.body;
     try {
       // Hash the password before saving it
-      //const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = await prisma.users.create({
         data: {
           email,
-          //password: hashedPassword,
+          password: hashedPassword,
+          uid,
+          created_at: new Date(),
+          updated_at: new Date()
         },
       });
 
-      res.status(201).json({ id: newUser.id, email: newUser.email });
+      res.status(201).json(newUser);
     } catch (error) {
+      console.log(error)
       if (error.code === 'P2002') { // Unique constraint violation
         return res.status(409).json({ error: 'Email already exists' });
       }
@@ -31,7 +34,18 @@ export const UserController = {
   // Get all users
   getUsers: async (req, res) => {
     try {
+      const { email, uid } = req.params;
+      // If email is provided, add it to the filter
+      const filter = {};
+      if (email) {
+        filter.email = email;
+      }
+      // If uid is provided, add it to the filter
+      if (uid) {
+        filter.uid = uid;
+      }
       const users = await prisma.users.findMany({
+        where: filter,
         select: {
           id: true,
           email: true,
