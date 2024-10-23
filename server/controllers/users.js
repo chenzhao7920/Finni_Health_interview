@@ -1,20 +1,16 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 export const UserController = {
   // Create a new user
   createUser: async (req, res) => {
-    const { email, password, uid } = req.body;
+    const { email, uid } = req.body;
     try {
-      // Hash the password before saving it
-      const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = await prisma.users.create({
         data: {
           email,
-          password: hashedPassword,
           uid,
           created_at: new Date(),
           updated_at: new Date()
@@ -34,7 +30,7 @@ export const UserController = {
   // Get all users
   getUsers: async (req, res) => {
     try {
-      const { email, uid } = req.params;
+      const { email, uid } = req.query;
       // If email is provided, add it to the filter
       const filter = {};
       if (email) {
@@ -45,14 +41,8 @@ export const UserController = {
         filter.uid = uid;
       }
       const users = await prisma.users.findMany({
-        where: filter,
-        select: {
-          id: true,
-          email: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
+          where: filter
+       });
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: 'Failed to retrieve users' });
@@ -81,12 +71,14 @@ export const UserController = {
   // Update a user by ID
   updateUserById: async (req, res) => {
     const { id } = req.params;
-    const { email, password } = req.body;
+    const { email, uid  } = req.body;
 
     try {
       const updateData = {};
-      if (email) updateData.email = email;
-      if (password) updateData.password = await bcrypt.hash(password, 10);
+      if (email) {
+        updateData.email = email;
+        updateData.uid = uid;
+      }
 
       const updatedUser = await prisma.users.update({
         where: { id: Number(id) },
