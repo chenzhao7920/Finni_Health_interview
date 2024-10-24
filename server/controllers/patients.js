@@ -13,7 +13,7 @@ export const PatientController = {
           first_name,
           middle_name,
           last_name,
-          date_of_birth,
+          date_of_birth: new Date(date_of_birth),
           status,
           custom_fields,
         },
@@ -41,10 +41,10 @@ export const PatientController = {
 
       const result = await prisma.$queryRaw`
            SELECT * FROM patient_addresses
-           LEFT JOIN patients
-           ON patients.id = patient_addresses.patient_id
-           AND patient_addresses.is_primary_address = true
+           JOIN patients
+           ON (patients.id = patient_addresses.patient_id AND patient_addresses.is_primary_address = true)
            ${Prisma.raw(whereClauses)}
+           order by patients.id
       `
 
       res.json(result);
@@ -60,7 +60,7 @@ export const PatientController = {
       const patient = await prisma.patients.findUnique({ // Use findUnique instead of get
         where: { id: Number(id) },
         include: {
-          patient_addresses: true
+          patient_addresses: true,
         }
       });
       res.json(patient);
@@ -71,7 +71,8 @@ export const PatientController = {
 
   updatePatientById: async (req, res) => { // Changed to lowercase 'u' for consistency
     const { id } = req.params;
-    const { first_name, middle_name, last_name, date_of_birth, status, custom_fields } = req.body;
+    const { first_name, middle_name, last_name, date_of_birth, status, custom_fields, primary_address, new_address} = req.body;
+
     try {
       const updatedPatient = await prisma.patients.update({
         where: { id: Number(id) },
@@ -79,13 +80,47 @@ export const PatientController = {
           first_name,
           middle_name,
           last_name,
-          date_of_birth,
+          date_of_birth: new Date(date_of_birth),
           status,
           custom_fields,
         },
       });
-      res.json(updatedPatient);
+      const updatedPatientAddress = await prisma.patient_addresses.updateMany({
+        where: {patient_id: Number(id), is_primary_address: true},
+        data: {
+          ...primary_address,
+        }
+      })
+      const exist_second_address = await prisma.patient_addresses.findMany({
+        where: {patient_id: Number(id), is_primary_address: false},
+      })
+      let updatedNewAddress;
+      if(exist_second_address.length){
+        updatedNewAddress = await prisma.patient_addresses.update({
+          where:{id: exist_second_address?.[0].id},
+          data:{
+            ...new_address,
+            is_primary_address: false,
+            patient_id: Number(id)
+          }
+        })
+      }else{
+        updatedNewAddress = await prisma.patient_addresses.create({
+          data:{
+            ...new_address,
+            is_primary_address: false,
+            patient_id: Number(id)
+          }
+        })
+      }
+
+      res.json({
+        ...updatedPatient,
+        primary_address:updatedPatientAddress,
+        new_address: updatedNewAddress
+      });
     } catch (error) {
+      console.log(error)
       res.status(500).json({ error: 'Failed to update patient' }); // Changed error message for clarity
     }
   },
