@@ -29,9 +29,9 @@ services:
 
   frontend:
     build:
-      context: ./client
+      context: ./frontend
     volumes:
-      - ./client:/usr/src/app
+      - ./frontend:/usr/src/app
     ports:
       - "80:80"
     networks:
